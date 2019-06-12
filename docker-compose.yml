@@ -1,0 +1,45 @@
+version: "3"
+services:
+    web:
+        image: nginx:latest
+        ports:
+            - "8080:80"
+        volumes:
+            - ./:/var/www/project
+            - ./docker/nginx/local/site.conf:/etc/nginx/conf.d/site.conf
+        links:
+          - php
+          - mariadb
+        networks:
+            - laravel
+    php:
+        build: ./docker/php7-fpm
+        volumes:
+            - ./:/var/www/project
+        networks:
+            - laravel
+    mariadb:
+        image: mariadb:${MARIADB_VERSION}
+        #build: ./docker/mysql
+        container_name: ${MYSQL_HOST}
+        restart: always
+        env_file:
+            - ".env"
+        environment:
+            - MYSQL_DATABASE=${MYSQL_DATABASE}
+            - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+            - MYSQL_USER=${MYSQL_USER}
+            - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+        ports:
+            - "8989:3306"
+        volumes:
+            - "database:/var/lib/mysql"
+            - "./db.sql:/docker-entrypoint-initdb.d/db.sql"
+        networks:
+            - laravel
+volumes:
+    database:
+
+networks:
+    laravel:
+        driver: bridge
